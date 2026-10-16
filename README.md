@@ -113,8 +113,11 @@ python enroll.py --list
 # Xóa một người dùng khỏi database:
 python enroll.py --delete "Nguyen Van A"
 
-# Nạp hàng loạt từ thư mục ảnh faces/<Ten_Nguoi>/anh.jpg:
-python enroll.py --folder faces/
+# Nạp hàng loạt từ thư mục ảnh (mặc định quét thư mục faces/):
+python enroll.py --folder
+
+# Hoặc chỉ định thư mục ảnh khác:
+python enroll.py --folder duong/dan/anh/
 ```
 
 ### 2. Khởi chạy với các cờ tùy chọn (`run.py`):

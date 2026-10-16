@@ -145,10 +145,15 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
         return False
 
 
-def enroll_from_folder(folder_path: str, detector_type: str = "yunnet"):
+def enroll_from_folder(folder_path: str = "faces", detector_type: str = "yunnet"):
     path = Path(folder_path)
+    if not path.is_absolute():
+        script_dir = Path(__file__).resolve().parent
+        if (script_dir / folder_path).exists():
+            path = script_dir / folder_path
+
     if not path.exists() or not path.is_dir():
-        print(f"[LỖI] Thư mục không tồn tại: {folder_path}")
+        print(f"[LỖI] Thư mục không tồn tại: {folder_path} (Đường dẫn: {path})")
         return False
 
     print("\n" + "=" * 60)
@@ -201,7 +206,13 @@ def enroll_from_folder(folder_path: str, detector_type: str = "yunnet"):
 def main():
     parser = argparse.ArgumentParser(description="Công cụ đăng ký khuôn mặt cho Raspberry Pi 4")
     parser.add_argument("--name", type=str, help="Họ và tên người cần đăng ký")
-    parser.add_argument("--folder", type=str, help="Đường dẫn thư mục ảnh để nạp hàng loạt")
+    parser.add_argument(
+        "--folder",
+        nargs="?",
+        const="faces",
+        type=str,
+        help="Đường dẫn thư mục ảnh để nạp hàng loạt (mặc định: 'faces')",
+    )
     parser.add_argument("--camera", type=int, default=0, help="Camera index (mặc định 0)")
     parser.add_argument("--samples", type=int, default=5, help="Số lượng mẫu chụp (mặc định 5)")
     parser.add_argument("--list", action="store_true", help="Xem danh sách người dùng đã đăng ký")
