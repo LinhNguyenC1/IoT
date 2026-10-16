@@ -1,8 +1,8 @@
 """
 Detection Package Factory
 Hỗ trợ cả 2 mô hình:
-- 'yunnet' : OpenCV YuNet INT8 (detector_yunnet.onnx ~120 KB) - Siêu nhẹ, mặc định tối ưu cho Pi 4
-- 'scrfd'  : InsightFace SCRFD (detector_scrfd.onnx ~2.5 MB) - Độ chính xác cao
+- 'scrfd'  : InsightFace SCRFD (detector_scrfd.onnx ~2.5 MB) - Mặc định, độ chính xác cao
+- 'yunnet' : OpenCV YuNet INT8 (detector_yunnet.onnx ~120 KB) - Siêu nhẹ, tốc độ cao
 """
 
 import os
@@ -13,7 +13,7 @@ from .scrfd_detector import SCRFDDetector
 def create_detector(detector_type: str = None, input_size=(640, 480), conf_thresh: float = 0.5):
     """
     Factory tạo detector dựa theo cấu hình.
-    detector_type: 'yunnet' (mặc định) hoặc 'scrfd'
+    detector_type: 'scrfd' (mặc định) hoặc 'yunnet'
     """
     if detector_type is None:
         detector_type = os.getenv("APP_DETECTOR", "scrfd").strip().lower()
