@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Môi trường ảo (Virtual Environment)
+venv/
+env/
+.venv/
+
+# Cấu hình môi trường riêng & Database cá nhân
+.env
+faces.db
+faces.db-journal
+
+# Ảnh chụp thử nghiệm trong thư mục faces
+faces/*
+!faces/.gitkeep
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

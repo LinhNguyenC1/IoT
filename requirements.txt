@@ -1,0 +1,6 @@
+numpy>=1.22.0
+opencv-python>=4.8.0
+onnxruntime>=1.16.0
+python-dotenv>=1.0.0
+gpiozero>=2.0
+lgpio>=0.2.2.0
