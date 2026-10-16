@@ -52,6 +52,12 @@ class EdgeApp:
         else:
             self.enable_pad = os.getenv("ENABLE_PAD", "true").strip().lower() in ("true", "1", "yes")
 
+        # Tự động phát hiện môi trường đồ họa ($DISPLAY)
+        has_display = bool(os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY"))
+        if not self.args.headless and not has_display:
+            print("[HEADLESS TỰ ĐỘNG] Không phát hiện biến $DISPLAY (chạy qua SSH). Tự động chuyển sang chế độ Console Log & Điều khiển LED.")
+            self.args.headless = True
+
         # 2. Khởi tạo Database
         self.db = LocalDB()
         user_count = len(self.db.list_users())
@@ -227,73 +233,92 @@ class EdgeApp:
                     # Chế độ CÓ PAD: Điều khiển 5 Cột
                     self.led_matrix.set_pad_mode(slot_statuses)
 
-                # ── 5. Vẽ Giao Diện Trực Quan (OpenCV Window) ──
+                # ── 5. Vẽ Giao Diện Hoặc Ghi Log Headless ──
                 if not self.args.headless:
-                    display_frame = frame.copy()
-                    h, w = frame.shape[:2]
+                    try:
+                        display_frame = frame.copy()
+                        h, w = frame.shape[:2]
 
-                    # Thanh trạng thái phía trên
-                    cv2.rectangle(display_frame, (0, 0), (w, 45), (30, 30, 30), -1)
-
-                    if self.enable_pad:
-                        mode_label = "CHẾ ĐỘ: CÓ PAD (BẢO MẬT CAO - MAX 5 MẶT)"
-                        mode_color = (0, 215, 255)  # Vàng
-                    else:
-                        mode_label = f"CHẾ ĐỘ: KHÔNG PAD ({len(tracked)} MẶT)"
-                        mode_color = (0, 255, 0)  # Xanh lá
-
-                    cv2.putText(display_frame, mode_label, (15, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.65, mode_color, 2)
-                    fps_str = f"FPS: {fps:.1f} | 'p': Đổi Mode | 'q': Thoát"
-                    cv2.putText(display_frame, fps_str, (w - 380, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (200, 200, 200), 1)
-
-                    # Vẽ từng khuôn mặt
-                    for detection, track in tracked:
-                        tid = track.track_id
-                        x1, y1, x2, y2 = [int(v) for v in track.bbox]
-                        slot_idx = self.slot_assignment.get(tid, -1)
-                        slot_prefix = f"[Cột {slot_idx + 1}] " if (self.enable_pad and slot_idx != -1) else ""
-
-                        identity = self.track_identities.get(tid)
+                        # Thanh trạng thái phía trên
+                        cv2.rectangle(display_frame, (0, 0), (w, 45), (30, 30, 30), -1)
 
                         if self.enable_pad:
-                            if not track.pad_ready:
-                                box_color = (0, 255, 255)
-                                label = f"{slot_prefix}Đang kiểm tra liveness..."
-                            elif track.is_spoof:
-                                box_color = (0, 0, 255)  # Đỏ
-                                label = f"{slot_prefix}CẢNH BÁO: GIẢ MẠO (SPOOF)"
-                            else:
-                                # Real
-                                if identity and identity[0] is not None:
-                                    box_color = (0, 255, 0)  # Xanh
-                                    label = f"{slot_prefix}{identity[0]} ({identity[1] * 100:.0f}%)"
-                                else:
-                                    box_color = (0, 165, 255)  # Cam
-                                    label = f"{slot_prefix}Unknown (Người lạ)"
+                            mode_label = "CHẾ ĐỘ: CÓ PAD (BẢO MẬT CAO - MAX 5 MẶT)"
+                            mode_color = (0, 215, 255)  # Vàng
                         else:
-                            # Không PAD
-                            if identity and identity[0] is not None:
-                                box_color = (0, 255, 0)
-                                label = f"{identity[0]} ({identity[1] * 100:.0f}%)"
+                            mode_label = f"CHẾ ĐỘ: KHÔNG PAD ({len(tracked)} MẶT)"
+                            mode_color = (0, 255, 0)  # Xanh lá
+
+                        cv2.putText(display_frame, mode_label, (15, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.65, mode_color, 2)
+                        fps_str = f"FPS: {fps:.1f} | 'p': Đổi Mode | 'q': Thoát"
+                        cv2.putText(display_frame, fps_str, (w - 380, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (200, 200, 200), 1)
+
+                        # Vẽ từng khuôn mặt
+                        for detection, track in tracked:
+                            tid = track.track_id
+                            x1, y1, x2, y2 = [int(v) for v in track.bbox]
+                            slot_idx = self.slot_assignment.get(tid, -1)
+                            slot_prefix = f"[Cột {slot_idx + 1}] " if (self.enable_pad and slot_idx != -1) else ""
+
+                            identity = self.track_identities.get(tid)
+
+                            if self.enable_pad:
+                                if not track.pad_ready:
+                                    box_color = (0, 255, 255)
+                                    label = f"{slot_prefix}Đang kiểm tra liveness..."
+                                elif track.is_spoof:
+                                    box_color = (0, 0, 255)  # Đỏ
+                                    label = f"{slot_prefix}CẢNH BÁO: GIẢ MẠO (SPOOF)"
+                                else:
+                                    # Real
+                                    if identity and identity[0] is not None:
+                                        box_color = (0, 255, 0)  # Xanh
+                                        label = f"{slot_prefix}{identity[0]} ({identity[1] * 100:.0f}%)"
+                                    else:
+                                        box_color = (0, 165, 255)  # Cam
+                                        label = f"{slot_prefix}Unknown (Người lạ)"
                             else:
-                                box_color = (0, 165, 255)
-                                label = f"Face #{tid}"
+                                # Không PAD
+                                if identity and identity[0] is not None:
+                                    box_color = (0, 255, 0)
+                                    label = f"{identity[0]} ({identity[1] * 100:.0f}%)"
+                                else:
+                                    box_color = (0, 165, 255)
+                                    label = f"Face #{tid}"
 
-                        # Vẽ Bounding Box
-                        cv2.rectangle(display_frame, (x1, y1), (x2, y2), box_color, 2)
+                            # Vẽ Bounding Box
+                            cv2.rectangle(display_frame, (x1, y1), (x2, y2), box_color, 2)
 
-                        # Vẽ Nhãn Tên
-                        cv2.rectangle(display_frame, (x1, max(0, y1 - 25)), (x1 + len(label) * 11, y1), box_color, -1)
-                        cv2.putText(display_frame, label, (x1 + 4, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 0, 0), 2)
+                            # Vẽ Nhãn Tên
+                            cv2.rectangle(display_frame, (x1, max(0, y1 - 25)), (x1 + len(label) * 11, y1), box_color, -1)
+                            cv2.putText(display_frame, label, (x1 + 4, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 0, 0), 2)
 
-                    cv2.imshow("Pi 4 Edge Face Recognition", display_frame)
-                    key = cv2.waitKey(1) & 0xFF
+                        cv2.imshow("Pi 4 Edge Face Recognition", display_frame)
+                        key = cv2.waitKey(1) & 0xFF
 
-                    if key == ord("q") or key == 27:
-                        print("\n[THOÁT] Đang tắt hệ thống...")
-                        break
-                    elif key == ord("p") or key == ord("P"):
-                        self.toggle_pad_mode()
+                        if key == ord("q") or key == 27:
+                            print("\n[THOÁT] Đang tắt hệ thống...")
+                            break
+                        elif key == ord("p") or key == ord("P"):
+                            self.toggle_pad_mode()
+                    except Exception as e:
+                        print(f"[CẢNH BÁO DISPLAY] Không thể hiển thị GUI ({e}). Tự động chuyển sang Headless.")
+                        self.args.headless = True
+                else:
+                    # Chế độ Headless: In log định kỳ ra Terminal
+                    if now_time - getattr(self, "last_console_log", 0.0) >= 1.0:
+                        if not self.enable_pad:
+                            print(f"[KHÔNG PAD] Đang phát hiện: {len(tracked)} khuôn mặt -> Bật {min(len(tracked), 5)} LED Xanh (FPS: {fps:.1f})")
+                        else:
+                            active_info = []
+                            for i in range(5):
+                                st = slot_statuses.get(i, "EMPTY")
+                                if st != "EMPTY":
+                                    active_info.append(f"Cột {i+1}: {st}")
+                            info_str = " | ".join(active_info) if active_info else "Đang chờ người..."
+                            print(f"[CÓ PAD] {len(tracked)} mặt | {info_str} (FPS: {fps:.1f})")
+                        self.last_console_log = now_time
+                    time.sleep(0.01)
 
         finally:
             self.cleanup()
@@ -303,7 +328,10 @@ class EdgeApp:
         self.led_matrix.close()
         if self.cap.isOpened():
             self.cap.release()
-        cv2.destroyAllWindows()
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
         print("[CLEANUP] Hoàn tất. Tạm biệt!")
 
 
