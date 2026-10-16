@@ -59,29 +59,29 @@ class AntiSpoofPredictor:
         if lx < 0 or ty < 0 or rx >= src_w or by >= src_h or rx < lx or by < ty:
             return None
 
-        crop = img[ty:by, lx:rx]
-        if crop.size == 0:
+        patch = img[ty : by + 1, lx : rx + 1]
+        if patch.size == 0:
             return None
-        return cv2.resize(crop, (size, size))
+        return cv2.resize(patch, (size, size))
 
-    def predict(self, frame: np.ndarray, bbox: tuple) -> tuple:
+    def predict(self, frame: np.ndarray, bbox: tuple):
         """
-        Dự đoán Real hay Spoof từ khuôn mặt trong frame.
-        Trả về: (is_real: bool, real_prob: float, logit_diff: float)
+        Dự đoán ảnh là REAL hay SPOOF.
+        Trả về: (is_real: bool, real_probability: float, pad_score: float)
         """
-        cropped = self.crop_face(frame, bbox, expansion=1.5, size=80)
-        if cropped is None:
-            return False, 0.0, -999.0
+        crop = self.crop_face(frame, bbox, expansion=1.5, size=80)
+        if crop is None:
+            return False, 0.0, 0.0
 
-        blob = cropped.astype(np.float32).transpose((2, 0, 1))[np.newaxis, ...]
-        outputs = self.session.run(None, {self.input_name: blob})
-        logits = outputs[0][0]
+        # MiniFASNet nhận BGR, scale [0, 1], shape (1, 3, 80, 80)
+        blob = (crop.astype(np.float32) / 255.0).transpose((2, 0, 1))[None, :]
+        logits = self.session.run(None, {self.input_name: blob})[0].flatten()
+        real_logit, spoof_logit = float(logits[0]), float(logits[1])
+        pad_score = real_logit - spoof_logit
+        is_real = pad_score >= self.threshold_logit
 
-        # Logit 0: Spoof, Logit 1: Real
-        logit_diff = float(logits[1] - logits[0])
-        exp_logits = np.exp(logits - np.max(logits))
-        probs = exp_logits / np.sum(exp_logits)
-        real_prob = float(probs[1])
-        is_real = logit_diff > self.threshold_logit
+        # Độ tin cậy liveness chuẩn hóa theo sigmoid quanh ngưỡng quyết định threshold_logit
+        delta = pad_score - self.threshold_logit
+        calibrated_score = float(1.0 / (1.0 + np.exp(-delta)))
 
-        return is_real, real_prob, logit_diff
+        return is_real, calibrated_score, pad_score
