@@ -107,17 +107,20 @@ python run.py
 
 ### 1. Quản lý người dùng trong Database (`enroll.py`):
 ```bash
+# Đăng ký trực tiếp qua Webcam (chương trình sẽ hỏi Tên -> mở camera chụp):
+python enroll.py
+
+# Đăng ký nhanh qua Webcam với tên truyền sẵn:
+python enroll.py --name "Nguyen Van A"
+
+# Nạp hàng loạt từ thư mục ảnh faces/<Ten_Nguoi>/anh.jpg:
+python enroll.py --folder faces/
+
 # Xem danh sách tất cả những ai đã đăng ký:
 python enroll.py --list
 
 # Xóa một người dùng khỏi database:
 python enroll.py --delete "Nguyen Van A"
-
-# Nạp hàng loạt từ thư mục ảnh (mặc định quét thư mục faces/):
-python enroll.py --folder
-
-# Hoặc chỉ định thư mục ảnh khác:
-python enroll.py --folder duong/dan/anh/
 ```
 
 ### 2. Khởi chạy với các cờ tùy chọn (`run.py`):
