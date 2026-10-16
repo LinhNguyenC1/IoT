@@ -77,7 +77,7 @@ class EdgeApp:
             pad_stale_timeout=3.0,
         )
         self.embedder = FaceEmbedder()
-        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "0.0")))
+        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "-4.2998")))
 
         # 4. Khởi tạo Phần cứng LED Matrix (10 LED)
         self.led_matrix = LEDMatrix()

@@ -12,7 +12,7 @@ from pathlib import Path
 class AntiSpoofPredictor:
     """MiniFASNet R7 Anti-Spoofing Predictor sử dụng ONNX Runtime."""
 
-    def __init__(self, model_path: str = None, threshold_logit: float = 0.0):
+    def __init__(self, model_path: str = None, threshold_logit: float = -4.2998):
         import onnxruntime as ort
 
         if model_path is None:
