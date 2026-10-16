@@ -56,6 +56,7 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
         return False
 
     collected_embeddings = []
+    collected_frames = []
     capturing = not has_display  # Nếu headless thì tự động chụp ngay
     last_sample_time = 0
     start_time = time.time()
@@ -89,6 +90,7 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
                             feat = embedder.extract(aligned)
                             if feat is not None:
                                 collected_embeddings.append(feat)
+                                collected_frames.append(frame.copy())
                                 last_sample_time = now
                                 print(f"  [+] Đã chụp mẫu {len(collected_embeddings)}/{num_samples}...")
 
@@ -146,16 +148,28 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
                 pass
 
     if len(collected_embeddings) >= num_samples:
-        # Tính vector trung bình của các mẫu
+        # 1. Tính vector trung bình của các mẫu
         avg_vec = np.mean(collected_embeddings, axis=0)
         norm = np.linalg.norm(avg_vec)
         if norm > 1e-6:
             avg_vec = avg_vec / norm
 
         db.add_user(name, avg_vec)
+
+        # 2. Lưu ảnh chụp từ webcam vào thư mục faces/<name>/
+        faces_dir = Path(__file__).resolve().parent / "faces"
+        safe_name = "".join(c for c in name if c not in r'\/:*?"<>|').strip()
+        user_faces_dir = faces_dir / (safe_name if safe_name else "user")
+        user_faces_dir.mkdir(parents=True, exist_ok=True)
+
+        for idx, img in enumerate(collected_frames, start=1):
+            img_path = user_faces_dir / f"{idx}.jpg"
+            cv2.imwrite(str(img_path), img)
+
         print("\n" + "=" * 60)
-        print(f" [THÀNH CÔNG] Đã lưu {num_samples} vector khuôn mặt cho: {name}")
-        print(" Cơ sở dữ liệu SQLite: faces.db đã được cập nhật!")
+        print(f" [THÀNH CÔNG] Đã đăng ký thành công cho: {name}")
+        print(f" - Cơ sở dữ liệu: Đã lưu vector 512D vào faces.db")
+        print(f" - Lưu trữ ảnh  : Đã lưu {len(collected_frames)} ảnh vào thư mục '{user_faces_dir}'")
         print("=" * 60 + "\n")
         return True
     else:
@@ -268,7 +282,12 @@ def main():
         if confirm == "y":
             deleted = db.delete_user(name)
             if deleted:
-                print(f"[OK] Đã xóa thành công '{name}'.")
+                print(f"[OK] Đã xóa thành công '{name}' trong database faces.db.")
+                faces_user_dir = Path(__file__).resolve().parent / "faces" / name
+                if faces_user_dir.exists() and faces_user_dir.is_dir():
+                    import shutil
+                    shutil.rmtree(faces_user_dir, ignore_errors=True)
+                    print(f"[OK] Đã xóa thư mục ảnh '{faces_user_dir}'.")
             else:
                 print(f"[LỖI] Không tìm thấy người dùng '{name}'!")
         return
