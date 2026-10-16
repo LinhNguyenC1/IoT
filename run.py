@@ -66,7 +66,16 @@ class EdgeApp:
         # 3. Khởi tạo AI Modules
         self.detector_type = args.detector.lower()
         self.detector = create_detector(self.detector_type, input_size=(640, 480))
-        self.tracker = FaceTracker(iou_threshold=0.3, max_lost_frames=10, redetect_interval=0.15)
+        self.tracker = FaceTracker(
+            recognize_interval_seconds=0.5,
+            iou_threshold=0.3,
+            max_missing_frames=10,
+            pad_smooth_window=5,
+            pad_spoof_min_ratio=0.6,
+            pad_interval_seconds=0.1,
+            pad_min_votes=3,
+            pad_stale_timeout=3.0,
+        )
         self.embedder = FaceEmbedder()
         self.antispoof = AntiSpoofPredictor()
 
