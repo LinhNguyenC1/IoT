@@ -32,11 +32,11 @@ class LEDMatrix:
         green_pins: Optional[List[int]] = None,
     ):
         if red_pins is None:
-            pins_str = os.getenv("LED_RED_PINS", "27,22,23,24,16")
+            pins_str = os.getenv("LED_RED_PINS", "27,22,23,25,16")
             red_pins = [int(p.strip()) for p in pins_str.split(",") if p.strip()]
 
         if green_pins is None:
-            pins_str = os.getenv("LED_GREEN_PINS", "17,18,25,12,26")
+            pins_str = os.getenv("LED_GREEN_PINS", "17,18,24,12,26")
             green_pins = [int(p.strip()) for p in pins_str.split(",") if p.strip()]
 
         self.red_pins = red_pins[:5]
