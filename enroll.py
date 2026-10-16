@@ -20,7 +20,9 @@ from alignment import align_face
 from recognition import FaceEmbedder
 
 
-def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, detector_type: str = "yunnet"):
+def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, detector_type: str = None):
+    if detector_type is None:
+        detector_type = os.getenv("APP_DETECTOR", "scrfd").strip().lower()
     has_display = bool(os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY"))
 
     print("\n" + "=" * 60)
@@ -107,12 +109,12 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
                         cv2.circle(display_frame, (int(pt[0]), int(pt[1])), 3, (0, 0, 255), -1)
 
                 status_text = (
-                    f"Nguoi dang ky: {name} | Nhan 's' de chup | 'q' de thoat"
+                    f"Dang ky: {name} | [S]: Chup mau | [Q]: Huy"
                     if not capturing
-                    else f"Dang thu thap mau: {len(collected_embeddings)}/{num_samples}..."
+                    else f"Dang thu thap: {len(collected_embeddings)}/{num_samples}..."
                 )
-                cv2.rectangle(display_frame, (0, 0), (w, 40), (40, 40, 40), -1)
-                cv2.putText(display_frame, status_text, (15, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                cv2.rectangle(display_frame, (0, 0), (w, 40), (35, 35, 35), -1)
+                cv2.putText(display_frame, status_text, (12, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 255, 255), 1, cv2.LINE_AA)
 
                 try:
                     cv2.imshow("SmartFace - Dang ky khuon mat", display_frame)
@@ -161,7 +163,9 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
         return False
 
 
-def enroll_from_folder(folder_path: str = "faces", detector_type: str = "yunnet"):
+def enroll_from_folder(folder_path: str = "faces", detector_type: str = None):
+    if detector_type is None:
+        detector_type = os.getenv("APP_DETECTOR", "scrfd").strip().lower()
     path = Path(folder_path)
     if not path.is_absolute():
         script_dir = Path(__file__).resolve().parent
@@ -230,6 +234,12 @@ def main():
         help="Đường dẫn thư mục ảnh để nạp hàng loạt (mặc định: 'faces')",
     )
     parser.add_argument("--camera", type=int, default=0, help="Camera index (mặc định 0)")
+    parser.add_argument(
+        "--detector",
+        type=str,
+        default=os.getenv("APP_DETECTOR", "scrfd"),
+        help="Model detector: scrfd hoặc yunnet (mặc định: scrfd)",
+    )
     parser.add_argument("--samples", type=int, default=5, help="Số lượng mẫu chụp (mặc định 5)")
     parser.add_argument("--list", action="store_true", help="Xem danh sách người dùng đã đăng ký")
     parser.add_argument("--delete", type=str, help="Xóa một người dùng theo tên")
@@ -265,7 +275,7 @@ def main():
 
     # Nạp từ thư mục
     if args.folder:
-        enroll_from_folder(args.folder)
+        enroll_from_folder(args.folder, detector_type=args.detector)
         return
 
     # Đăng ký qua Webcam
@@ -281,7 +291,7 @@ def main():
         print("[LỖI] Tên người dùng không được để trống!")
         return
 
-    enroll_from_webcam(name, camera_index=args.camera, num_samples=args.samples)
+    enroll_from_webcam(name, camera_index=args.camera, num_samples=args.samples, detector_type=args.detector)
 
 
 if __name__ == "__main__":

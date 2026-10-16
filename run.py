@@ -36,7 +36,7 @@ def parse_args():
     parser.set_defaults(enable_pad=None)
 
     parser.add_argument("--camera", type=int, default=int(os.getenv("CAMERA_INDEX", "0")), help="Camera index")
-    parser.add_argument("--detector", type=str, default=os.getenv("APP_DETECTOR", "yunnet"), help="yunnet hoặc scrfd")
+    parser.add_argument("--detector", type=str, default=os.getenv("APP_DETECTOR", "scrfd"), help="scrfd hoặc yunnet")
     parser.add_argument("--threshold", type=float, default=float(os.getenv("MATCH_THRESHOLD", "0.62")), help="Ngưỡng so khớp ArcFace")
     parser.add_argument("--headless", action="store_true", help="Chạy không giao diện đồ họa (in log terminal)")
     return parser.parse_args()
@@ -248,36 +248,51 @@ class EdgeApp:
                         display_frame = frame.copy()
                         h, w = frame.shape[:2]
 
-                        # Thanh trạng thái phía trên
-                        cv2.rectangle(display_frame, (0, 0), (w, 45), (30, 30, 30), -1)
+                        # Thanh trạng thái phía trên (Header Banner 2 hàng gọn gàng, không chồng lấn)
+                        header_h = 52
+                        cv2.rectangle(display_frame, (0, 0), (w, header_h), (25, 25, 25), -1)
 
                         if self.enable_pad:
-                            mode_label = "CHẾ ĐỘ: CÓ PAD (BẢO MẬT CAO - MAX 5 MẶT)"
-                            mode_color = (0, 215, 255)  # Vàng
+                            mode_label = "CHE DO: CO PAD (MAX 5 MAT)"
+                            mode_color = (0, 215, 255)  # Vàng cam
                         else:
-                            mode_label = f"CHẾ ĐỘ: KHÔNG PAD ({len(tracked)} MẶT)"
+                            mode_label = f"CHE DO: KHONG PAD ({len(tracked)} MAT)"
                             mode_color = (0, 255, 0)  # Xanh lá
 
-                        cv2.putText(display_frame, mode_label, (15, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.65, mode_color, 2)
-                        fps_str = f"FPS: {fps:.1f} | 'p': Đổi Mode | 'q': Thoát"
-                        cv2.putText(display_frame, fps_str, (w - 380, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (200, 200, 200), 1)
+                        # Hàng 1 (y = 22): Chế độ bên trái, FPS bên phải
+                        cv2.putText(display_frame, mode_label, (12, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, mode_color, 2, cv2.LINE_AA)
+
+                        fps_str = f"FPS: {fps:.1f}"
+                        (fps_w, _), _ = cv2.getTextSize(fps_str, cv2.FONT_HERSHEY_SIMPLEX, 0.52, 1)
+                        cv2.putText(display_frame, fps_str, (w - fps_w - 12, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (220, 220, 220), 1, cv2.LINE_AA)
+
+                        # Hàng 2 (y = 44): Phím tắt bên trái, Detector bên phải
+                        hint_str = "[P] Doi Che Do  |  [Q] Thoat"
+                        cv2.putText(display_frame, hint_str, (12, 44), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (180, 180, 180), 1, cv2.LINE_AA)
+
+                        det_str = f"Detector: {self.detector_type.upper()}"
+                        (det_w, _), _ = cv2.getTextSize(det_str, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+                        cv2.putText(display_frame, det_str, (w - det_w - 12, 44), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (160, 160, 160), 1, cv2.LINE_AA)
+
+                        # Đường kẻ phân cách nhẹ dưới header
+                        cv2.line(display_frame, (0, header_h), (w, header_h), (60, 60, 60), 1)
 
                         # Vẽ từng khuôn mặt
                         for detection, track in tracked:
                             tid = track.track_id
                             x1, y1, x2, y2 = [int(v) for v in track.bbox]
                             slot_idx = self.slot_assignment.get(tid, -1)
-                            slot_prefix = f"[Cột {slot_idx + 1}] " if (self.enable_pad and slot_idx != -1) else ""
+                            slot_prefix = f"[Cot {slot_idx + 1}] " if (self.enable_pad and slot_idx != -1) else ""
 
                             identity = self.track_identities.get(tid)
 
                             if self.enable_pad:
                                 if not track.pad_ready:
-                                    box_color = (0, 255, 255)
-                                    label = f"{slot_prefix}Đang kiểm tra liveness..."
+                                    box_color = (0, 255, 255)  # Vàng
+                                    label = f"{slot_prefix}Kiem tra PAD..."
                                 elif track.is_spoof:
                                     box_color = (0, 0, 255)  # Đỏ
-                                    label = f"{slot_prefix}CẢNH BÁO: GIẢ MẠO (SPOOF)"
+                                    label = f"{slot_prefix}CANH BAO: SPOOF"
                                 else:
                                     # Real
                                     if identity and identity[0] is not None:
@@ -285,7 +300,7 @@ class EdgeApp:
                                         label = f"{slot_prefix}{identity[0]} ({identity[1] * 100:.0f}%)"
                                     else:
                                         box_color = (0, 165, 255)  # Cam
-                                        label = f"{slot_prefix}Unknown (Người lạ)"
+                                        label = f"{slot_prefix}Unknown"
                             else:
                                 # Không PAD
                                 if identity and identity[0] is not None:
@@ -298,9 +313,11 @@ class EdgeApp:
                             # Vẽ Bounding Box
                             cv2.rectangle(display_frame, (x1, y1), (x2, y2), box_color, 2)
 
-                            # Vẽ Nhãn Tên
-                            cv2.rectangle(display_frame, (x1, max(0, y1 - 25)), (x1 + len(label) * 11, y1), box_color, -1)
-                            cv2.putText(display_frame, label, (x1 + 4, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 0, 0), 2)
+                            # Vẽ Nhãn Tên chuẩn xác kích thước và tránh đè lên header
+                            (tw, th), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
+                            label_top = max(header_h + 4, y1 - th - 8)
+                            cv2.rectangle(display_frame, (x1, label_top), (x1 + tw + 8, label_top + th + 6), box_color, -1)
+                            cv2.putText(display_frame, label, (x1 + 4, label_top + th + 2), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1, cv2.LINE_AA)
 
                         cv2.imshow("Pi 4 Edge Face Recognition", display_frame)
                         key = cv2.waitKey(1) & 0xFF

@@ -185,9 +185,10 @@ pi4-edge-face-recognition/
      # hoặc trên Pi OS: sudo apt install -y python3-gpiozero python3-lgpio
      ```
 
-3. **Cách tăng FPS tối đa trên Pi 4:**
-   * Nhấn phím `p` để chuyển sang chế độ **KHÔNG PAD**.
-   * Đảm bảo model dò mặt trong `.env` là `APP_DETECTOR=yunnet` (YuNet INT8 nhanh hơn SCRFD khoảng 2.5 lần trên CPU ARM).
+3. **Cách tùy chỉnh detector và tăng FPS:**
+   * Hệ thống mặc định sử dụng `APP_DETECTOR=scrfd` (~2.5 MB) để đạt độ chính xác cao và 5 điểm mốc (landmarks) chuẩn xác.
+   * Nếu cần tốc độ cao nhất (20–25 FPS), bạn có thể chuyển sang `APP_DETECTOR=yunnet` (~120 KB) trong file `.env` hoặc thêm cờ `--detector yunnet` khi chạy.
+   * Nhấn phím `p` trên bàn phím để chuyển đổi giữa 2 chế độ: **CÓ PAD** và **KHÔNG PAD**.
 
 ---
 *Chúc các bạn hoàn thành bài tập thực hành IoT xuất sắc!*
