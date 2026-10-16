@@ -20,9 +20,7 @@ from alignment import align_face
 from recognition import FaceEmbedder
 
 
-def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, detector_type: str = None):
-    if detector_type is None:
-        detector_type = os.getenv("APP_DETECTOR", "scrfd").strip().lower()
+def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5):
     has_display = bool(os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY"))
 
     print("\n" + "=" * 60)
@@ -39,7 +37,7 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
     print("=" * 60 + "\n")
 
     db = LocalDB()
-    detector = create_detector(detector_type=detector_type, input_size=(640, 480))
+    detector = create_detector(det_size=(640, 640))
     embedder = FaceEmbedder()
 
     cap = cv2.VideoCapture(camera_index)
@@ -184,9 +182,7 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
         return False
 
 
-def enroll_from_folder(folder_path: str = "faces", detector_type: str = None):
-    if detector_type is None:
-        detector_type = os.getenv("APP_DETECTOR", "scrfd").strip().lower()
+def enroll_from_folder(folder_path: str = "faces"):
     path = Path(folder_path)
     if not path.is_absolute():
         script_dir = Path(__file__).resolve().parent
@@ -202,7 +198,7 @@ def enroll_from_folder(folder_path: str = "faces", detector_type: str = None):
     print("=" * 60)
 
     db = LocalDB()
-    detector = create_detector(detector_type=detector_type, input_size=(640, 640))
+    detector = create_detector(det_size=(640, 640))
     embedder = FaceEmbedder()
 
     # Tìm các thư mục con hoặc file ảnh
@@ -255,12 +251,6 @@ def main():
         help="Đường dẫn thư mục ảnh để nạp hàng loạt (mặc định: 'faces')",
     )
     parser.add_argument("--camera", type=int, default=0, help="Camera index (mặc định 0)")
-    parser.add_argument(
-        "--detector",
-        type=str,
-        default=os.getenv("APP_DETECTOR", "scrfd"),
-        help="Model detector: scrfd hoặc yunnet (mặc định: scrfd)",
-    )
     parser.add_argument("--samples", type=int, default=5, help="Số lượng mẫu chụp (mặc định 5)")
     parser.add_argument("--list", action="store_true", help="Xem danh sách người dùng đã đăng ký")
     parser.add_argument("--delete", type=str, help="Xóa một người dùng theo tên")
@@ -301,7 +291,7 @@ def main():
 
     # Nạp từ thư mục
     if args.folder:
-        enroll_from_folder(args.folder, detector_type=args.detector)
+        enroll_from_folder(args.folder)
         return
 
     # Đăng ký qua Webcam
@@ -317,7 +307,7 @@ def main():
         print("[LỖI] Tên người dùng không được để trống!")
         return
 
-    enroll_from_webcam(name, camera_index=args.camera, num_samples=args.samples, detector_type=args.detector)
+    enroll_from_webcam(name, camera_index=args.camera, num_samples=args.samples)
 
 
 if __name__ == "__main__":

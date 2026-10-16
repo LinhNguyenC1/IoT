@@ -12,7 +12,7 @@ from pathlib import Path
 class AntiSpoofPredictor:
     """MiniFASNet R7 Anti-Spoofing Predictor sử dụng ONNX Runtime."""
 
-    def __init__(self, model_path: str = None, threshold_logit: float = -4.2998):
+    def __init__(self, model_path: str = None, threshold_logit: float = 0.0):
         import onnxruntime as ort
 
         if model_path is None:
@@ -76,7 +76,8 @@ class AntiSpoofPredictor:
         # MiniFASNet nhận BGR, scale [0, 1], shape (1, 3, 80, 80)
         blob = (crop.astype(np.float32) / 255.0).transpose((2, 0, 1))[None, :]
         logits = self.session.run(None, {self.input_name: blob})[0].flatten()
-        real_logit, spoof_logit = float(logits[0]), float(logits[1])
+        # Trong MiniFASNet R7 (R7_SC_100K_crop15), logits[1] là Real và logits[0] là Spoof
+        real_logit, spoof_logit = float(logits[1]), float(logits[0])
         pad_score = real_logit - spoof_logit
         is_real = pad_score >= self.threshold_logit
 

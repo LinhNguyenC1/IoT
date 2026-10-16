@@ -36,7 +36,7 @@ def parse_args():
     parser.set_defaults(enable_pad=None)
 
     parser.add_argument("--camera", type=int, default=int(os.getenv("CAMERA_INDEX", "0")), help="Camera index")
-    parser.add_argument("--detector", type=str, default=os.getenv("APP_DETECTOR", "scrfd"), help="scrfd hoặc yunnet")
+    parser.add_argument("--detector", type=str, default="scrfd", help="Bộ dò khuôn mặt (mặc định: scrfd)")
     parser.add_argument("--threshold", type=float, default=float(os.getenv("MATCH_THRESHOLD", "0.62")), help="Ngưỡng so khớp ArcFace")
     parser.add_argument("--headless", action="store_true", help="Chạy không giao diện đồ họa (in log terminal)")
     return parser.parse_args()
@@ -64,8 +64,8 @@ class EdgeApp:
         print(f"[Database] Đã tải {user_count} người dùng từ SQLite (faces.db).")
 
         # 3. Khởi tạo AI Modules
-        self.detector_type = args.detector.lower()
-        self.detector = create_detector(self.detector_type, input_size=(640, 480))
+        self.detector_type = "scrfd"
+        self.detector = create_detector(det_size=(640, 640), conf_thresh=0.5)
         self.tracker = FaceTracker(
             recognize_interval_seconds=0.5,
             iou_threshold=0.3,
@@ -77,7 +77,7 @@ class EdgeApp:
             pad_stale_timeout=3.0,
         )
         self.embedder = FaceEmbedder()
-        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "-4.2998")))
+        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "0.0")))
 
         # 4. Khởi tạo Phần cứng LED Matrix (10 LED)
         self.led_matrix = LEDMatrix()

@@ -43,7 +43,7 @@ class SCRFDDetector:
                 self._model = app.models.get("detection")
             except Exception as e2:
                 raise RuntimeError(
-                    f"Không thể khởi tạo SCRFD Detector: {e}. Vui lòng cài insightface hoặc chuyển sang 'yunnet' trong .env"
+                    f"Không thể khởi tạo SCRFD Detector: {e}. Vui lòng kiểm tra môi trường hoặc file models/detector_scrfd.onnx"
                 )
 
         if self._model is None:

@@ -147,12 +147,11 @@ pi4-edge-face-recognition/
 ├── database/
 │   ├── __init__.py
 │   └── local_db.py              # SQLite: lưu users, embeddings 512D; Cosine matching
-├── models/                      # Đóng gói đủ 4 weights ONNX nhẹ (~17.5 MB)
-│   ├── detector_yunnet.onnx     # YuNet INT8 (~120 KB - nhanh nhất trên Pi)
-│   ├── detector_scrfd.onnx      # SCRFD 500M (~2.5 MB)
-│   ├── antispoof_minifasnet.onnx# MiniFASNetV2 (~1.7 MB - chống giả mạo)
+├── models/                      # Đóng gói 3 weights ONNX nhẹ (~17.8 MB)
+│   ├── detector_scrfd.onnx      # InsightFace SCRFD (~2.5 MB)
+│   ├── antispoof_minifasnet.onnx# MiniFASNet R7 (~1.7 MB - chống giả mạo)
 │   └── recognition_arcface.onnx # ArcFace MobileFaceNet 512D (~13.6 MB)
-├── detection/                   # Wrapper bộ dò YuNet & SCRFD
+├── detection/                   # Wrapper bộ dò InsightFace SCRFD
 ├── tracking/                    # Lucas-Kanade Optical Flow Cadence Tracker
 ├── antispoof/                   # MiniFASNet Predictor & Temporal Voting
 ├── alignment/                   # 5-point landmark affine aligner
@@ -160,8 +159,8 @@ pi4-edge-face-recognition/
 ├── peripherals/
 │   ├── __init__.py
 │   └── led_matrix.py            # Quản lý 10 LED qua gpiozero (5 đỏ, 5 xanh)
-├── faces/                       # Thư mục chứa ảnh mẫu nạp hàng loạt
-├── enroll.py                    # Script đăng ký khuôn mặt (Webcam hoặc Folder)
+├── faces/                       # Thư mục lưu ảnh mẫu nạp theo từng người
+├── enroll.py                    # Script đăng ký khuôn mặt (Webcam phím 's' hoặc Folder)
 ├── run.py                       # Entrypoint chính của hệ thống
 ├── setup.sh                     # Script 1-click cài đặt môi trường
 ├── requirements.txt             # Thư viện Python phụ thuộc
@@ -185,9 +184,8 @@ pi4-edge-face-recognition/
      # hoặc trên Pi OS: sudo apt install -y python3-gpiozero python3-lgpio
      ```
 
-3. **Cách tùy chỉnh detector và tăng FPS:**
-   * Hệ thống mặc định sử dụng `APP_DETECTOR=scrfd` (~2.5 MB) để đạt độ chính xác cao và 5 điểm mốc (landmarks) chuẩn xác.
-   * Nếu cần tốc độ cao nhất (20–25 FPS), bạn có thể chuyển sang `APP_DETECTOR=yunnet` (~120 KB) trong file `.env` hoặc thêm cờ `--detector yunnet` khi chạy.
+3. **Cơ chế hoạt động & Bộ dò:**
+   * Hệ thống chuẩn hóa sử dụng **InsightFace SCRFD** (`detector_scrfd.onnx` ~2.5 MB) để trích xuất 5 điểm mốc (landmarks) chuẩn xác cho ArcFace và chống rung hình khi theo dõi khuôn mặt.
    * Nhấn phím `p` trên bàn phím để chuyển đổi giữa 2 chế độ: **CÓ PAD** và **KHÔNG PAD**.
 
 ---
