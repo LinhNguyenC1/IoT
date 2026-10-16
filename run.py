@@ -77,7 +77,7 @@ class EdgeApp:
             pad_stale_timeout=3.0,
         )
         self.embedder = FaceEmbedder()
-        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "-4.2998")))
+        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "0.0")))
 
         # 4. Khởi tạo Phần cứng LED Matrix (10 LED)
         self.led_matrix = LEDMatrix()
@@ -202,8 +202,8 @@ class EdgeApp:
                     if self.enable_pad:
                         if track.needs_pad(interval_seconds=0.1):
                             try:
-                                is_real, real_prob, _ = self.antispoof.predict(frame, bbox)
-                                track.update_pad(is_real, real_prob)
+                                is_real, real_prob, pad_score = self.antispoof.predict(frame, bbox)
+                                track.update_pad(is_real, pad_score)
                             except Exception:
                                 pass
 
@@ -287,20 +287,21 @@ class EdgeApp:
                             identity = self.track_identities.get(tid)
 
                             if self.enable_pad:
+                                pad_val = track.last_pad_score if track.last_pad_score is not None else 0.0
                                 if not track.pad_ready:
                                     box_color = (0, 255, 255)  # Vàng
-                                    label = f"{slot_prefix}Kiem tra PAD..."
+                                    label = f"{slot_prefix}Kiem tra PAD... (d={pad_val:+.2f})"
                                 elif track.is_spoof:
                                     box_color = (0, 0, 255)  # Đỏ
-                                    label = f"{slot_prefix}CANH BAO: SPOOF"
+                                    label = f"{slot_prefix}CANH BAO: SPOOF (d={pad_val:+.2f})"
                                 else:
                                     # Real
                                     if identity and identity[0] is not None:
                                         box_color = (0, 255, 0)  # Xanh
-                                        label = f"{slot_prefix}{identity[0]} ({identity[1] * 100:.0f}%)"
+                                        label = f"{slot_prefix}{identity[0]} ({identity[1] * 100:.0f}%) [d={pad_val:+.2f}]"
                                     else:
                                         box_color = (0, 165, 255)  # Cam
-                                        label = f"{slot_prefix}Unknown"
+                                        label = f"{slot_prefix}Unknown [d={pad_val:+.2f}]"
                             else:
                                 # Không PAD
                                 if identity and identity[0] is not None:
