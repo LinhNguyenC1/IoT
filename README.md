@@ -3,20 +3,16 @@
 
 ---
 
-## 🌟 ĐẶC ĐIỂM NỔI BẬT
+## ĐẶC ĐIỂM
 
-* ⚡ **Độc lập 100% (Edge-Only / Zero-Server):** Chạy hoàn toàn cục bộ trên Raspberry Pi 4, không phụ thuộc vào internet, server hay cloud broker ngoài.
-* 💾 **Cơ sở dữ liệu SQLite Local (`faces.db`):** Lưu trữ vector đặc trưng khuôn mặt 512D ArcFace; so khớp Cosine Similarity tại chỗ siêu tốc ($< 1\text{ ms}$).
-* 🛡️ **Hỗ trợ 2 Chế độ Hoạt động Linh hoạt:**
-  * **Chế độ 1: KHÔNG PAD (High-Speed):** Bỏ qua kiểm tra liveness, đạt tốc độ khung hình cao **20 – 25 FPS**, hàng LED đếm số lượng người.
-  * **Chế độ 2: CÓ PAD (Full-Security):** Sử dụng mô hình **MiniFASNetV2** phát hiện tấn công qua ảnh in và màn hình điện thoại; giới hạn 5 khuôn mặt gắn cố định vào 5 cột LED.
-  * *Chuyển đổi tức thời:* Nhấn phím **`p`** ngay trên bàn phím khi camera đang chạy.
-* 💡 **Bảng Điều Khiển Phần Cứng Ma Trận 10 LED (gpiozero):**
-  * 5 Cột đại diện cho 5 người theo dõi (Slots 1–5).
-  * 🔴 **Đỏ SÁNG:** Khuôn mặt **Giả mạo (Spoof)**.
-  * 🟢 **Xanh SÁNG:** Khuôn mặt **Người thật hợp lệ (Real & Known)**.
-  * 🟡 **CẢ HAI ĐÈN SÁNG:** Khuôn mặt **Người lạ (Unknown)**.
-* 🎯 **Đăng Ký Đơn Giản (`enroll.py`):** Chỉ cần nhập Họ tên, chụp 5 góc mặt qua webcam là xong trong 5 giây!
+- **Xử lý cục bộ:** Chạy trực tiếp trên Raspberry Pi 4, không kết nối server bên ngoài.
+- **Lưu trữ dữ liệu:** Sử dụng SQLite (`faces.db`) để lưu trữ thông tin người dùng và vector đặc trưng 512 chiều trích xuất từ ArcFace MobileFaceNet.
+- **Hai chế độ hoạt động:**
+  - *Chế độ 1 (KHÔNG PAD):* Bỏ qua bước kiểm tra liveness để tối ưu tốc độ xử lý; các đèn LED Xanh sáng theo số lượng khuôn mặt phát hiện được.
+  - *Chế độ 2 (CÓ PAD):* Tích hợp mô hình MiniFASNetV2 để phân biệt người thật và ảnh/màn hình giả mạo; giới hạn xử lý tối đa 5 khuôn mặt tương ứng 5 cột LED.
+  - *Chuyển đổi chế độ:* Phím `p` trên bàn phím, cờ dòng lệnh CLI (`--pad` / `--no-pad`), hoặc cấu hình trong `.env`.
+- **Chỉ thị trạng thái bằng 10 LED (gpiozero):** Bố trí 2 hàng x 5 cột (5 Đỏ, 5 Xanh) hiển thị trạng thái từng khuôn mặt (Spoof: Đỏ, Real: Xanh, Unknown: Đỏ + Xanh).
+- **Đăng ký khuôn mặt (`enroll.py`):** Hỗ trợ chụp mẫu qua webcam (chụp 5 frame tính vector trung bình) hoặc quét từ thư mục ảnh.
 
 ---
 
