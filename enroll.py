@@ -30,17 +30,12 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
     print("=" * 60)
     if has_display:
         print(" Hướng dẫn:")
-        print(" - Nhìn thẳng vào camera, giữ khuôn mặt ở giữa khung hình.")
-        print(" - Hơi nghiêng nhẹ góc mặt khi hệ thống chụp các mẫu.")
-        print(" - Nhấn 's' để bắt đầu chụp mẫu | Nhấn 'q' để hủy.")
+        print(f" - Nhìn vào camera và bấm phím 's' trên cửa sổ để chụp từng ảnh (cần đủ {num_samples} ảnh).")
+        print(" - Giữa các lần bấm 's', bạn có thể hơi đổi góc mặt (thẳng, nghiêng nhẹ) để lấy mẫu đa dạng.")
+        print(" - Nhấn 'q' để hủy bỏ đăng ký.")
     else:
         print(" [CHẾ ĐỘ HEADLESS / SSH] Không phát hiện màn hình đồ họa ($DISPLAY).")
-        print(" - Hãy ngồi đối diện trước USB Webcam và nhìn thẳng.")
-        try:
-            input(" -> Nhấn [ENTER] trên bàn phím để bắt đầu tự động chụp mẫu... ")
-        except (KeyboardInterrupt, EOFError):
-            print("\nĐã hủy.")
-            return False
+        print(f" - Nhấn [ENTER] trên bàn phím mỗi lần muốn chụp 1 ảnh mẫu (cần đủ {num_samples} ảnh).")
     print("=" * 60 + "\n")
 
     db = LocalDB()
@@ -57,52 +52,23 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
 
     collected_embeddings = []
     collected_frames = []
-    capturing = not has_display  # Nếu headless thì tự động chụp ngay
-    last_sample_time = 0
-    start_time = time.time()
-    last_wait_msg_time = 0
 
     try:
-        while True:
-            ret, frame = cap.read()
-            if not ret or frame is None:
-                continue
-
-            h, w = frame.shape[:2]
-
-            # Dò khuôn mặt
-            faces = detector.detect(frame)
-
-            # Chọn khuôn mặt lớn nhất
-            main_face = None
-            if len(faces) > 0:
-                faces.sort(key=lambda f: (f["bbox"][2] - f["bbox"][0]) * (f["bbox"][3] - f["bbox"][1]), reverse=True)
-                main_face = faces[0]
-
-            now = time.time()
-
-            if main_face:
-                landmarks = main_face["landmarks"]
-                if capturing:
-                    if now - last_sample_time >= 0.35:
-                        aligned = align_face(frame, landmarks)
-                        if aligned is not None:
-                            feat = embedder.extract(aligned)
-                            if feat is not None:
-                                collected_embeddings.append(feat)
-                                collected_frames.append(frame.copy())
-                                last_sample_time = now
-                                print(f"  [+] Đã chụp mẫu {len(collected_embeddings)}/{num_samples}...")
-
-                        if len(collected_embeddings) >= num_samples:
-                            break
-            else:
-                if not has_display and (now - last_wait_msg_time >= 1.5):
-                    print("  [Đang chờ] Vui lòng nhìn thẳng vào camera...")
-                    last_wait_msg_time = now
-
-            # Nếu có màn hình đồ họa -> Hiển thị OpenCV GUI
+        while len(collected_embeddings) < num_samples:
             if has_display:
+                ret, frame = cap.read()
+                if not ret or frame is None:
+                    continue
+
+                h, w = frame.shape[:2]
+
+                # Dò khuôn mặt thời gian thực
+                faces = detector.detect(frame)
+                main_face = None
+                if len(faces) > 0:
+                    faces.sort(key=lambda f: (f["bbox"][2] - f["bbox"][0]) * (f["bbox"][3] - f["bbox"][1]), reverse=True)
+                    main_face = faces[0]
+
                 display_frame = frame.copy()
                 if main_face:
                     x1, y1, x2, y2 = main_face["bbox"]
@@ -110,34 +76,75 @@ def enroll_from_webcam(name: str, camera_index: int = 0, num_samples: int = 5, d
                     for pt in main_face["landmarks"]:
                         cv2.circle(display_frame, (int(pt[0]), int(pt[1])), 3, (0, 0, 255), -1)
 
-                status_text = (
-                    f"Dang ky: {name} | [S]: Chup mau | [Q]: Huy"
-                    if not capturing
-                    else f"Dang thu thap: {len(collected_embeddings)}/{num_samples}..."
-                )
-                cv2.rectangle(display_frame, (0, 0), (w, 40), (35, 35, 35), -1)
-                cv2.putText(display_frame, status_text, (12, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 255, 255), 1, cv2.LINE_AA)
+                header_h = 42
+                cv2.rectangle(display_frame, (0, 0), (w, header_h), (35, 35, 35), -1)
+                status_text = f"Dang ky: {name} | Da chup: {len(collected_embeddings)}/{num_samples} | Nhan [S] de chup | [Q] Huy"
+                cv2.putText(display_frame, status_text, (12, 27), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 255, 255), 1, cv2.LINE_AA)
 
                 try:
                     cv2.imshow("SmartFace - Dang ky khuon mat", display_frame)
                     key = cv2.waitKey(1) & 0xFF
-                    if key == ord("q"):
+
+                    if key == ord("q") or key == 27:
                         print("[HỦY] Người dùng đã hủy đăng ký.")
                         return False
-                    elif key == ord("s") and not capturing:
+                    elif key in (ord("s"), ord("S")):
                         if main_face:
-                            capturing = True
-                            print("[BẮT ĐẦU] Đang tự động chụp mẫu...")
+                            aligned = align_face(frame, main_face["landmarks"])
+                            if aligned is not None:
+                                feat = embedder.extract(aligned)
+                                if feat is not None:
+                                    collected_embeddings.append(feat)
+                                    collected_frames.append(frame.copy())
+                                    print(f"  [+] Đã chụp mẫu {len(collected_embeddings)}/{num_samples} thành công!")
+                                else:
+                                    print("  [CẢNH BÁO] Không trích xuất được đặc trưng, vui lòng nhấn 's' lại.")
+                            else:
+                                print("  [CẢNH BÁO] Căn chỉnh khuôn mặt thất bại, vui lòng nhấn 's' lại.")
+
+                            if len(collected_embeddings) >= num_samples:
+                                break
                         else:
-                            print("[CẢNH BÁO] Chưa tìm thấy khuôn mặt trong camera để bắt đầu!")
+                            print("  [CẢNH BÁO] Không tìm thấy khuôn mặt trong camera! Vui lòng nhìn thẳng và nhấn 's'.")
                 except Exception:
-                    has_display = False  # Nếu lỗi display giữa chừng thì fallback về headless
+                    has_display = False
             else:
-                # Chế độ headless timeout an toàn sau 30s nếu không thấy mặt
-                if now - start_time > 30.0 and len(collected_embeddings) == 0:
-                    print("[TIMEOUT] Quá 30 giây không phát hiện khuôn mặt trước webcam!")
-                    break
-                time.sleep(0.01)
+                # Chế độ Headless / SSH: Chụp từng ảnh khi người dùng bấm ENTER
+                try:
+                    prompt_str = f"Nhấn [ENTER] để chụp ảnh mẫu {len(collected_embeddings) + 1}/{num_samples} (hoặc gõ 'q' để hủy): "
+                    user_cmd = input(prompt_str).strip().lower()
+                    if user_cmd == "q":
+                        print("[HỦY] Người dùng đã hủy đăng ký.")
+                        return False
+
+                    # Đọc frame mới nhất từ webcam
+                    for _ in range(5):
+                        cap.read()
+                    ret, cur_frame = cap.read()
+                    if not ret or cur_frame is None:
+                        print("  [LỖI] Không thể đọc hình ảnh từ webcam!")
+                        continue
+
+                    faces = detector.detect(cur_frame)
+                    if not faces:
+                        print("  [CẢNH BÁO] Không phát hiện khuôn mặt trước webcam! Vui lòng thử lại.")
+                        continue
+
+                    faces.sort(key=lambda f: (f["bbox"][2] - f["bbox"][0]) * (f["bbox"][3] - f["bbox"][1]), reverse=True)
+                    aligned = align_face(cur_frame, faces[0]["landmarks"])
+                    if aligned is not None:
+                        feat = embedder.extract(aligned)
+                        if feat is not None:
+                            collected_embeddings.append(feat)
+                            collected_frames.append(cur_frame.copy())
+                            print(f"  [+] Đã chụp mẫu {len(collected_embeddings)}/{num_samples} thành công!")
+                        else:
+                            print("  [CẢNH BÁO] Không trích xuất được đặc trưng, vui lòng thử lại.")
+                    else:
+                        print("  [CẢNH BÁO] Căn chỉnh khuôn mặt thất bại, vui lòng thử lại.")
+                except (KeyboardInterrupt, EOFError):
+                    print("\n[HỦY] Đã dừng đăng ký.")
+                    return False
 
     finally:
         cap.release()
