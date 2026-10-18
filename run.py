@@ -67,12 +67,12 @@ class EdgeApp:
         self.detector_type = "scrfd"
         self.detector = create_detector(det_size=(640, 640), conf_thresh=0.5)
         self.tracker = FaceTracker(
-            recognize_interval_seconds=0.5,
+            recognize_interval_seconds=1.0,
             iou_threshold=0.3,
             max_missing_frames=10,
             pad_smooth_window=5,
             pad_spoof_min_ratio=0.6,
-            pad_interval_seconds=0.1,
+            pad_interval_seconds=0.2,
             pad_min_votes=3,
             pad_stale_timeout=3.0,
         )
@@ -99,7 +99,7 @@ class EdgeApp:
         self.track_identities = {}  # track_id -> (name, score)
 
         self.running = True
-        self.detection_interval = 0.15
+        self.detection_interval = 0.2
         self.last_detection_time = 0.0
 
     def get_free_slot(self) -> int:
@@ -203,7 +203,7 @@ class EdgeApp:
 
                     # (A) Xử lý Liveness nếu ở Chế độ CÓ PAD
                     if self.enable_pad:
-                        if track.needs_pad(interval_seconds=0.1):
+                        if track.needs_pad(interval_seconds=0.2):
                             try:
                                 is_real, real_prob, pad_score = self.antispoof.predict(frame, bbox)
                                 track.update_pad(is_real, pad_score)
