@@ -1,0 +1,41 @@
+{
+  "checks": [
+    {
+      "batch_size": 1,
+      "case": 0,
+      "max_abs_logit_error": 4.76837158203125e-07,
+      "max_abs_score_error": 0.0,
+      "verdicts_match": true
+    },
+    {
+      "batch_size": 1,
+      "case": 1,
+      "max_abs_logit_error": 2.1457672119140625e-06,
+      "max_abs_score_error": 3.814697265625e-06,
+      "verdicts_match": true
+    },
+    {
+      "batch_size": 3,
+      "case": 2,
+      "max_abs_logit_error": 1.3113021850585938e-06,
+      "max_abs_score_error": 2.384185791015625e-06,
+      "verdicts_match": true
+    },
+    {
+      "batch_size": 8,
+      "case": 3,
+      "max_abs_logit_error": 2.7418136596679688e-06,
+      "max_abs_score_error": 5.245208740234375e-06,
+      "verdicts_match": true
+    }
+  ],
+  "max_abs_logit_error": 2.7418136596679688e-06,
+  "model_sha256": "7b3008a040e155f7b96fca74f52dd38cc6296d88fee7a9424e653203c367a253",
+  "onnx_version": "1.22.0",
+  "onnxruntime_version": "1.24.4",
+  "provider": "CPUExecutionProvider",
+  "purpose": "offline numerical parity, not camera/dataset accuracy validation",
+  "source_checkpoint_sha256": "843a8a693c6135be2a532122df19cb0e0151ce83d6c49f23c414c34e52b570af",
+  "status": "passed",
+  "torch_version": "2.11.0"
+}

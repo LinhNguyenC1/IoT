@@ -16,7 +16,14 @@ class AntiSpoofPredictor:
         import onnxruntime as ort
 
         if model_path is None:
-            model_path = str(Path(__file__).resolve().parent.parent / "models" / "antispoof_minifasnet.onnx")
+            env_path = os.getenv("FAS_MODEL_PATH")
+            if env_path:
+                p = Path(env_path)
+                if not p.is_absolute():
+                    p = Path(__file__).resolve().parent.parent / p
+                model_path = str(p)
+            else:
+                model_path = str(Path(__file__).resolve().parent.parent / "models" / "R7_SC_100K_crop15.onnx")
 
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Không tìm thấy model Anti-Spoofing tại: {model_path}")
@@ -26,7 +33,10 @@ class AntiSpoofPredictor:
         opts.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         self.session = ort.InferenceSession(model_path, sess_options=opts, providers=["CPUExecutionProvider"])
         self.input_name = self.session.get_inputs()[0].name
+        self.model_path = model_path
+        self.model_name = Path(model_path).name
         self.threshold_logit = threshold_logit
+        print(f"[AntiSpoof] Đã tải model: {self.model_name} (Ngưỡng logit: {self.threshold_logit})")
 
     @staticmethod
     def crop_face(img: np.ndarray, bbox: tuple, expansion: float = 1.5, size: int = 80):

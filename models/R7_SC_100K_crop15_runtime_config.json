@@ -1,0 +1,51 @@
+{
+  "apply_gamma": false,
+  "architecture_source_file": "MiniFASNet.py",
+  "architecture_source_sha256": "e498c4ec5e1ddfaba62b941a126c19d65aa564999f3309661fe43ee8bf38acd7",
+  "bbox_expansion_factor": 1.5,
+  "calibrated_logit_threshold": -0.373016357421875,
+  "class_names": [
+    "real",
+    "spoof"
+  ],
+  "color_order": "BGR",
+  "crop_mode": "minifasnet_train_v1",
+  "crop_smoothing": false,
+  "decision_rule": "real iff score >= calibrated_logit_threshold",
+  "input_name": "input",
+  "input_range": "[0,1]",
+  "input_shape": [
+    "batch",
+    3,
+    80,
+    80
+  ],
+  "manifest_sha256": {
+    "scale100k_train.csv": "5a4bab6ab7c11b275e215552c8dd6e4bb4524aac094804ef1492abfb5126cc4e",
+    "scale15k_val.csv": "cefc7bb4be38928d7c8907c7c4e521c326b9f2d7481aa33ccdd9cd0febe2ba54"
+  },
+  "mean": null,
+  "model_file": "R7_SC_100K_crop15.onnx",
+  "model_img_size": 80,
+  "model_sha256": "09856f581a2868f1346ece4ce6d2e9818cd27e973a33a0bfb0d215a35475d487",
+  "model_status": "trained R7_SC_100K_crop15; best checkpoint selected on Val15K",
+  "onnx_opset": 17,
+  "onnx_validation_file": "R7_SC_100K_crop15_onnx_validation.json",
+  "output_classes": 2,
+  "output_name": "logits",
+  "output_shape": [
+    "batch",
+    2
+  ],
+  "predictor_threshold_probability": 0.4078123648407799,
+  "run_id": "R7_SC_100K_crop15",
+  "schema": "face_auth_pad_runtime_config_v1",
+  "score_formula": "logits[:,0] - logits[:,1]",
+  "score_type": "binary_logit_difference",
+  "selected_epoch": 11,
+  "source_checkpoint_file": "antispoof/notebooks/final/binary_crossdomain_v2/output/17_scale100k_C_P3SF_R7SC_crop15/runs/R7_SC_100K_crop15/best.pth",
+  "source_checkpoint_sha256": "4e45058e8c74e98c91c453cd52498f522250cfe1b0f9a0a1ee825b3593bbf1ae",
+  "source_run_config_sha256": "84c8e53e1e0f555fabc12ada13d02a84b5da117747abdbf0e2ed3e4932927448",
+  "std": null,
+  "threshold_source": "Frozen scale15k_val.csv calibration for reloaded best checkpoint; no runtime refitting"
+}

@@ -78,6 +78,8 @@ class EdgeApp:
         )
         self.embedder = FaceEmbedder()
         self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "-4.90")))
+        print(f"[AI Modules] Nhận diện : ArcFace (buffalo_s) | Ngưỡng MATCH_THRESHOLD = {self.args.threshold}")
+        print(f"[AI Modules] Anti-Spoof: {self.antispoof.model_name} | Ngưỡng FAS_LOGIT_THRESHOLD = {self.antispoof.threshold_logit}")
 
         # 4. Khởi tạo Phần cứng LED Matrix (10 LED)
         self.led_matrix = LEDMatrix()
@@ -122,9 +124,10 @@ class EdgeApp:
         print("\n" + "=" * 65)
         print(" HỆ THỐNG NHẬN DIỆN KHUÔN MẶT & CHỐNG GIẢ MẠO PI 4")
         print("=" * 65)
-        print(f" - Chế độ ban đầu : {'CÓ PAD (Giới hạn 5 mặt)' if self.enable_pad else 'KHÔNG PAD (Đếm số mặt)'}")
-        print(f" - Bộ dò khuôn mặt : {self.detector_type.upper()}")
-        print(f" - Ngưỡng so khớp  : {self.args.threshold}")
+        print(f" - Chế độ ban đầu     : {'CÓ PAD (Giới hạn 5 mặt)' if self.enable_pad else 'KHÔNG PAD (Đếm số mặt)'}")
+        print(f" - Bộ dò khuôn mặt    : {self.detector_type.upper()}")
+        print(f" - Model Nhận diện    : ArcFace w600k_mbf (Ngưỡng so khớp: {self.args.threshold})")
+        print(f" - Model Anti-Spoof   : {self.antispoof.model_name} (Ngưỡng logit: {self.antispoof.threshold_logit})")
         print(" Phím tắt điều khiển:")
         print("   [p] : Chuyển đổi giữa CÓ PAD <--> KHÔNG PAD tức thời")
         print("   [q] : Thoát chương trình")
@@ -219,6 +222,8 @@ class EdgeApp:
                                 if feat is not None:
                                     matched_name, score = self.db.match_face(feat, threshold=self.args.threshold)
                                     self.track_identities[tid] = (matched_name, score)
+                                    status_str = f"KHỚP ({matched_name})" if matched_name else "UNKNOWN"
+                                    print(f"[Nhận diện] Track #{tid}: {status_str} | Điểm Cosine: {score:.3f} (Ngưỡng: {self.args.threshold})")
 
                     # (C) Xác định trạng thái của Slot này để điều khiển LED
                     if self.enable_pad and slot_idx != -1:
@@ -343,7 +348,7 @@ class EdgeApp:
                                 if st != "EMPTY":
                                     active_info.append(f"Cột {i+1}: {st}")
                             info_str = " | ".join(active_info) if active_info else "Đang chờ người..."
-                            print(f"[CÓ PAD] {len(tracked)} mặt | {info_str} (FPS: {fps:.1f})")
+                            print(f"[CÓ PAD] {len(tracked)} mặt | {info_str} | [PAD: {self.antispoof.model_name}, Thresh: {self.antispoof.threshold_logit}] (FPS: {fps:.1f})")
                         self.last_console_log = now_time
                     time.sleep(0.01)
 

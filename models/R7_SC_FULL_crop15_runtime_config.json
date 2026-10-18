@@ -1,0 +1,51 @@
+{
+  "apply_gamma": false,
+  "architecture_source_file": "MiniFASNet.py",
+  "architecture_source_sha256": "e498c4ec5e1ddfaba62b941a126c19d65aa564999f3309661fe43ee8bf38acd7",
+  "bbox_expansion_factor": 1.5,
+  "calibrated_logit_threshold": 4.66259765625,
+  "class_names": [
+    "real",
+    "spoof"
+  ],
+  "color_order": "BGR",
+  "crop_mode": "minifasnet_train_v1",
+  "crop_smoothing": false,
+  "decision_rule": "real iff score >= calibrated_logit_threshold",
+  "input_name": "input",
+  "input_range": "[0,1]",
+  "input_shape": [
+    "batch",
+    3,
+    80,
+    80
+  ],
+  "manifest_sha256": {
+    "full_test.csv": "d3fee50ddb0061c3193fee09044a1f410a7490c781e099cb3c0aa12175ba98f4",
+    "full_train.csv": "fe947b4d3e1f620f7c5cda9f59906e803646b6bf809e857095a493e171fbfb71"
+  },
+  "mean": null,
+  "model_file": "R7_SC_FULL_crop15.onnx",
+  "model_img_size": 80,
+  "model_sha256": "7b3008a040e155f7b96fca74f52dd38cc6296d88fee7a9424e653203c367a253",
+  "model_status": "trained R7_SC_FULL_crop15; best checkpoint selected on full official CelebA Test-as-Val",
+  "onnx_opset": 17,
+  "onnx_validation_file": "R7_SC_FULL_crop15_onnx_validation.json",
+  "output_classes": 2,
+  "output_name": "logits",
+  "output_shape": [
+    "batch",
+    2
+  ],
+  "predictor_threshold_probability": 0.9906464119794868,
+  "run_id": "R7_SC_FULL_crop15",
+  "schema": "face_auth_pad_runtime_config_v1",
+  "score_formula": "logits[:,0] - logits[:,1]",
+  "score_type": "binary_logit_difference",
+  "selected_epoch": 7,
+  "source_checkpoint_file": "antispoof/notebooks/final/binary_crossdomain_v2/output/18_fullscale_C_P3SF_R7SC_crop15/runs/R7_SC_FULL_crop15/best.pth",
+  "source_checkpoint_sha256": "843a8a693c6135be2a532122df19cb0e0151ce83d6c49f23c414c34e52b570af",
+  "source_run_config_sha256": "47b62d9371464924a1a3878cd8eb81c7b4c7ff3adc8f8f77b3ba690df599e278",
+  "std": null,
+  "threshold_source": "Frozen full_test.csv (CelebA Test-as-Val) calibration for reloaded best checkpoint; no runtime refitting"
+}

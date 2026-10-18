@@ -1,0 +1,41 @@
+{
+  "checks": [
+    {
+      "batch_size": 1,
+      "case": 0,
+      "max_abs_logit_error": 7.152557373046875e-07,
+      "max_abs_score_error": 9.5367431640625e-07,
+      "verdicts_match": true
+    },
+    {
+      "batch_size": 1,
+      "case": 1,
+      "max_abs_logit_error": 9.5367431640625e-06,
+      "max_abs_score_error": 1.71661376953125e-05,
+      "verdicts_match": true
+    },
+    {
+      "batch_size": 3,
+      "case": 2,
+      "max_abs_logit_error": 1.430511474609375e-06,
+      "max_abs_score_error": 1.9073486328125e-06,
+      "verdicts_match": true
+    },
+    {
+      "batch_size": 8,
+      "case": 3,
+      "max_abs_logit_error": 2.384185791015625e-06,
+      "max_abs_score_error": 4.76837158203125e-06,
+      "verdicts_match": true
+    }
+  ],
+  "max_abs_logit_error": 9.5367431640625e-06,
+  "model_sha256": "09856f581a2868f1346ece4ce6d2e9818cd27e973a33a0bfb0d215a35475d487",
+  "onnx_version": "1.22.0",
+  "onnxruntime_version": "1.24.4",
+  "provider": "CPUExecutionProvider",
+  "purpose": "offline numerical parity, not camera/dataset accuracy validation",
+  "source_checkpoint_sha256": "4e45058e8c74e98c91c453cd52498f522250cfe1b0f9a0a1ee825b3593bbf1ae",
+  "status": "passed",
+  "torch_version": "2.11.0"
+}
