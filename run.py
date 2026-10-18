@@ -77,7 +77,7 @@ class EdgeApp:
             pad_stale_timeout=3.0,
         )
         self.embedder = FaceEmbedder()
-        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "-4.90")))
+        self.antispoof = AntiSpoofPredictor(threshold_logit=float(os.getenv("FAS_LOGIT_THRESHOLD", "-0.3730")))
         print(f"[AI Modules] Nhận diện : ArcFace (buffalo_s) | Ngưỡng MATCH_THRESHOLD = {self.args.threshold}")
         print(f"[AI Modules] Anti-Spoof: {self.antispoof.model_name} | Ngưỡng FAS_LOGIT_THRESHOLD = {self.antispoof.threshold_logit}")
 
